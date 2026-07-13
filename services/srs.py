@@ -16,15 +16,15 @@ def apply_answer(progress: Progress, correct: bool) -> None:
     now = datetime.utcnow()
     progress.last_seen = now
     if correct:
-        progress.correct += 1
-        stage = min(progress.stage, len(INTERVALS_DAYS) - 1)
+        progress.correct = (progress.correct or 0) + 1
+        stage = min(progress.stage or 0, len(INTERVALS_DAYS) - 1)
         progress.next_review = now + timedelta(days=INTERVALS_DAYS[stage])
-        progress.stage = min(progress.stage + 1, len(INTERVALS_DAYS))
+        progress.stage = min((progress.stage or 0) + 1, len(INTERVALS_DAYS))
     else:
-        progress.wrong += 1
-        progress.stage = max(0, progress.stage - 2)
+        progress.wrong = (progress.wrong or 0) + 1
+        progress.stage = max(0, (progress.stage or 0) - 2)
         progress.next_review = now + timedelta(minutes=10)
 
 
 def is_learned(progress: Progress) -> bool:
-    return progress.stage >= LEARNED_STAGE
+    return (progress.stage or 0) >= LEARNED_STAGE

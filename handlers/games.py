@@ -21,13 +21,13 @@ def _again_kb(game: str) -> Kb:
 async def _reward(session, user, word_id: int, ok: bool):
     progress = await ts.get_progress(session, user.id, word_id)
     if ok:
-        progress.correct += 1
+        progress.correct = (progress.correct or 0) + 1
         user.correct_total += 1
         user.combo += 1
         user.best_combo = max(user.best_combo, user.combo)
         user.xp += config.XP_GAME
     else:
-        progress.wrong += 1
+        progress.wrong = (progress.wrong or 0) + 1
         user.wrong_total += 1
         user.combo = 0
     session.add(History(user_id=user.id, word_id=word_id, correct=ok))

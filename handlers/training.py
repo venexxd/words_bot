@@ -92,12 +92,12 @@ async def on_answer(message: Message, state: FSMContext, session, user):
 
     quick = mode == "quick"
     if ok:
-        head = "✅ Верно!" + (" (почти — проверь написание 😉)" if typo else "") + f"  +{config.XP_CORRECT} XP"
-        text = head if quick else head + "\n\n" + ts.answer_card(word)
-        if not quick and user.combo >= 5 and user.combo % 5 == 0:
+        head = "✅ <b>Верно!</b>" + (" (почти — проверь написание 😉)" if typo else "") + f"  +{config.XP_CORRECT} XP"
+        text = head + "\n\n" + ts.answer_card(word)
+        if user.combo >= 5 and user.combo % 5 == 0:
             text += f"\n\n🔥 Серия: {user.combo} подряд!"
     else:
-        text = "❌ Не совсем.\n\n" + ts.answer_card(word) + "\n\n🔁 Покажу это слово ещё раз позже."
+        text = "❌ <b>Неверно.</b>\n\n" + ts.answer_card(word) + "\n\n🔁 Покажу это слово ещё раз позже."
     await message.answer(text)
 
     if user.words_today == user.daily_goal:

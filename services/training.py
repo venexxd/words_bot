@@ -66,7 +66,7 @@ async def get_progress(session: AsyncSession, user_id: int, word_id: int) -> Pro
     q = select(Progress).where(Progress.user_id == user_id, Progress.word_id == word_id)
     p = (await session.execute(q)).scalars().first()
     if not p:
-        p = Progress(user_id=user_id, word_id=word_id)
+        p = Progress(user_id=user_id, word_id=word_id, correct=0, wrong=0, stage=0, favorite=False)
         session.add(p)
     return p
 
