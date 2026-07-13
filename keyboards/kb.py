@@ -2,12 +2,22 @@
 from aiogram.types import InlineKeyboardButton as Btn
 from aiogram.types import InlineKeyboardMarkup as Kb
 
-LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
+# Категории по популярности слов (частотный ранг)
+LEVELS = ["P1", "P2", "P3", "P4", "P5"]
+
+LEVEL_LABELS = {
+    "P1": "🔥 Топ-1000",
+    "P2": "⭐ Популярные (1000–2500)",
+    "P3": "📗 Средние (2500–5000)",
+    "P4": "📘 Редкие (5000–7500)",
+    "P5": "💎 Очень редкие (7500+)",
+    "all": "🌐 Все слова",
+}
 
 
 def levels_kb() -> Kb:
-    rows = [[Btn(text=lvl, callback_data=f"lvl:{lvl}") for lvl in LEVELS[i : i + 3]] for i in (0, 3)]
-    rows.append([Btn(text="🌐 Все уровни", callback_data="lvl:all")])
+    rows = [[Btn(text=LEVEL_LABELS[lvl], callback_data=f"lvl:{lvl}")] for lvl in LEVELS]
+    rows.append([Btn(text=LEVEL_LABELS["all"], callback_data="lvl:all")])
     return Kb(inline_keyboard=rows)
 
 
@@ -53,7 +63,7 @@ def settings_menu(user) -> Kb:
     return Kb(
         inline_keyboard=[
             [Btn(text=f"Направление: {d}", callback_data="set:direction")],
-            [Btn(text=f"Уровень: {user.level}", callback_data="set:level")],
+            [Btn(text=f"Категория: {LEVEL_LABELS.get(user.level, LEVEL_LABELS['all'])}", callback_data="set:level")],
             [Btn(text=f"🎯 Цель: {user.daily_goal} слов/день", callback_data="set:goal")],
             [Btn(text=f"⏰ Напоминание: {rem}", callback_data="set:reminder")],
             [Btn(text="🏠 Меню", callback_data="menu")],

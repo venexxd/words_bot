@@ -48,7 +48,7 @@ class Word(Base):
     en: Mapped[str] = mapped_column(String(128), unique=True, index=True)
     ru: Mapped[list] = mapped_column(JSON, default=list)          # варианты перевода
     pos: Mapped[Optional[str]] = mapped_column(String(16))        # часть речи
-    level: Mapped[str] = mapped_column(String(4), default="A1", index=True)
+    level: Mapped[str] = mapped_column(String(4), default="P3", index=True)  # P1..P5 — категория популярности
     freq: Mapped[Optional[int]] = mapped_column(Integer)          # частотный ранг
     ipa: Mapped[Optional[str]] = mapped_column(String(64))
     example: Mapped[Optional[str]] = mapped_column(Text)

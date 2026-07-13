@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy import func, select
 
 from database.models import Word
-from keyboards.kb import levels_kb, main_menu
+from keyboards.kb import LEVEL_LABELS, levels_kb, main_menu
 
 router = Router()
 
@@ -18,7 +18,7 @@ async def cmd_start(message: Message, state: FSMContext, session, user):
     await message.answer(
         f"Привет, {message.from_user.first_name}! 👋\n\n"
         f"Я помогу тебе выучить английские слова — в базе <b>{total}</b> слов.\n\n"
-        "🎓 Выбери свой уровень:",
+        "🎯 Выбери категорию слов (по популярности):",
         reply_markup=levels_kb(),
     )
 
@@ -27,8 +27,8 @@ async def cmd_start(message: Message, state: FSMContext, session, user):
 async def set_level(cq: CallbackQuery, state: FSMContext, session, user):
     user.level = cq.data.split(":")[1]
     await session.commit()
-    lvl = "Все уровни" if user.level == "all" else user.level
-    await cq.message.edit_text(f"Уровень: <b>{lvl}</b> ✅\n\nВыбери режим:", reply_markup=main_menu())
+    lvl = LEVEL_LABELS.get(user.level, LEVEL_LABELS["all"])
+    await cq.message.edit_text(f"Категория: <b>{lvl}</b> ✅\n\nВыбери режим:", reply_markup=main_menu())
     await cq.answer()
 
 
@@ -53,5 +53,5 @@ async def cmd_help(message: Message, session, user):
         "/stats — статистика\n"
         "/profile — профиль\n"
         "/top — лидерборд\n"
-        "/start — сменить уровень"
+        "/start — сменить категорию слов"
     )

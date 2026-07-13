@@ -9,14 +9,15 @@ JSON — список объектов с теми же полями (ru/synonym
 import csv
 import io
 import json
+import re
 
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 import config
-from database.models import Word
+from database.models import History, Progress, Word
 
 router = Router()
 
@@ -33,6 +34,8 @@ async def cmd_admin(message: Message, session, user):
         "🛠 <b>Админ-панель</b>\n\n"
         "➕ <code>/addword en | перевод1, перевод2 | pos | level | тема | пример</code>\n"
         "🗑 <code>/delword слово</code>\n"
+        "🧹 <code>/cleanwords</code> — удалить слова без русского перевода\n"
+        "♻️ <code>/resetwords да</code> — удалить ВСЕ слова и прогресс\n"
         "📥 Пришли файл <b>.csv</b> или <b>.json</b> — импортирую слова (существующие обновлю).\n"
         "Формат — в README."
     )
@@ -77,6 +80,51 @@ async def cmd_delword(message: Message, session, user):
     await session.delete(word)
     await session.commit()
     await message.answer(f"🗑 Слово <b>{en}</b> удалено.")
+
+
+@router.message(Command("resetwords"))
+async def cmd_resetwords(message: Message, session, user):
+    """Полная очистка словаря: все слова, прогресс и история ответов."""
+    if not _is_admin(message):
+        return
+    arg = (message.text or "").removeprefix("/resetwords").strip().lower()
+    if arg != "да":
+        await message.answer(
+            "⚠️ Это удалит <b>все слова</b> и весь прогресс по ним у всех пользователей.\n"
+            "Для подтверждения отправь: <code>/resetwords да</code>"
+        )
+        return
+    await session.execute(delete(History))
+    await session.execute(delete(Progress))
+    await session.execute(delete(Word))
+    await session.commit()
+    await message.answer("♻️ Словарь полностью очищен. Пришли файл со словами — импортирую заново.")
+
+
+@router.message(Command("cleanwords"))
+async def cmd_cleanwords(message: Message, session, user):
+    """Удаляет слова, у которых в переводе нет ни одной русской буквы (мусор из импорта)."""
+    if not _is_admin(message):
+        return
+    words = (await session.execute(select(Word))).scalars().all()
+    bad_ids = []
+    for w in words:
+        ru = w.ru if isinstance(w.ru, list) else [str(w.ru or "")]
+        joined = " ".join(str(x) for x in ru)
+        if not re.search(r"[\u0430-\u044f\u0410-\u042f\u0451\u0401]", joined):
+            bad_ids.append(w.id)
+    if not bad_ids:
+        await message.answer("🧹 Мусорных слов не найдено.")
+        return
+    # Сначала чистим связанный прогресс и историю, потом сами слова
+    CHUNK = 500
+    for i in range(0, len(bad_ids), CHUNK):
+        chunk = bad_ids[i:i + CHUNK]
+        await session.execute(delete(History).where(History.word_id.in_(chunk)))
+        await session.execute(delete(Progress).where(Progress.word_id.in_(chunk)))
+        await session.execute(delete(Word).where(Word.id.in_(chunk)))
+    await session.commit()
+    await message.answer(f"🧹 Удалено слов без перевода: <b>{len(bad_ids)}</b>")
 
 
 def _split(value: str | None) -> list[str]:

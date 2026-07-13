@@ -15,8 +15,8 @@ ACHIEVEMENTS: dict[str, tuple[str, str]] = {
     "streak_30": ("⚡", "30 дней подряд"),
     "combo_25": ("🎯", "25 правильных подряд"),
     "combo_100": ("🚀", "100 правильных подряд"),
-    "level_a1": ("🥇", "Все слова A1"),
-    "level_a2": ("🥈", "Все слова A2"),
+    "level_a1": ("🥇", "Весь Топ-1000"),
+    "level_a2": ("🥈", "Все популярные слова"),
 }
 
 
@@ -62,7 +62,7 @@ async def check_achievements(session: AsyncSession, user: User) -> list[str]:
     want("learned_100", learned >= 100)
     want("learned_1000", learned >= 1000)
 
-    for code, level in (("level_a1", "A1"), ("level_a2", "A2")):
+    for code, level in (("level_a1", "P1"), ("level_a2", "P2")):
         if code in have:
             continue
         total = await _total_words(session, level)

@@ -5,7 +5,7 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy import func, select
 
 from database.models import Progress, User, UserAchievement, Word
-from keyboards.kb import LEVELS, menu_btn
+from keyboards.kb import LEVEL_LABELS, LEVELS, menu_btn
 from services.achievements import ACHIEVEMENTS
 from services.srs import LEARNED_STAGE
 
@@ -57,14 +57,14 @@ async def stats_text(session, user) -> str:
         f"🗓 Сегодня: <b>{user.words_today}</b> / {user.daily_goal} {_bar(user.words_today, user.daily_goal)}",
         f"⏳ Осталось выучить: <b>{max(0, total_words - learned)}</b>",
         "",
-        "<b>Прогресс по уровням:</b>",
+        "<b>Прогресс по категориям:</b>",
     ]
     for lvl in LEVELS:
         total_l = (await session.execute(select(func.count()).select_from(Word).where(Word.level == lvl))).scalar() or 0
         if not total_l:
             continue
         learned_l = await _learned(session, user.id, lvl)
-        lines.append(f"{lvl}: {_bar(learned_l, total_l)} {learned_l}/{total_l}")
+        lines.append(f"{LEVEL_LABELS.get(lvl, lvl)}: {_bar(learned_l, total_l)} {learned_l}/{total_l}")
     return "\n".join(lines)
 
 
@@ -72,13 +72,13 @@ async def profile_text(session, user) -> str:
     learned = await _learned(session, user.id)
     ach_codes = (await session.execute(select(UserAchievement.code).where(UserAchievement.user_id == user.id))).scalars().all()
     ach = " ".join(ACHIEVEMENTS[c][0] for c in ach_codes if c in ACHIEVEMENTS) or "пока нет"
-    lvl = "Все уровни" if user.level == "all" else user.level
+    lvl = LEVEL_LABELS.get(user.level, LEVEL_LABELS["all"])
     reg = user.created_at.strftime("%d.%m.%Y") if user.created_at else "—"
     return "\n".join(
         [
             f"👤 <b>{user.first_name or 'Профиль'}</b>",
             "",
-            f"🎓 Уровень: <b>{lvl}</b>",
+            f"🎯 Категория: <b>{lvl}</b>",
             f"❤️ Любимый режим: <b>{MODE_LABELS.get(user.mode, user.mode)}</b>",
             f"📚 Изучено слов: <b>{learned}</b>",
             f"⭐ XP: <b>{user.xp}</b>",

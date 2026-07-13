@@ -8,7 +8,10 @@ from database.models import Progress, User, Word
 
 
 def _level_filter(user: User):
-    return [] if user.level == "all" else [Word.level == user.level]
+    # "all" или старое значение (A1..C2) — без фильтра
+    if user.level == "all" or user.level not in ("P1", "P2", "P3", "P4", "P5"):
+        return []
+    return [Word.level == user.level]
 
 
 async def pick_word(session: AsyncSession, user: User, mode: str) -> Word | None:
